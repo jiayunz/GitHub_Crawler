@@ -17,7 +17,7 @@ def get_single_user_profile_by_id_test():
 
 def get_single_user_detailed_list_test():
     url = 'https://api.github.com/users/landiveo/repos'
-    num = 5
+    num = 2
     repos = user_crawler.get_single_user_detailed_list(url, num)
     assert len(repos) == num
 

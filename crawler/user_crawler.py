@@ -1,9 +1,11 @@
 #coding:utf8
 import requests
 import time
+import datetime
 import random
 import re
 import json
+import sys
 
 # add token
 headers = {"Authorization": "token ..."}
@@ -14,7 +16,7 @@ def check_rate_limit_remaining():
         response = requests.head(url=url,headers=headers).headers
         print "X-RateLimit-Remaining:", response['X-RateLimit-Remaining']
         if response['X-RateLimit-Remaining'] == 0:
-            print "exceeds X-RateLimit-Remaining, print wait 5 minutes"
+            print "exceeds X-RateLimit-Remaining, please wait 5 minutes"
             time.sleep(300)
     except requests.exceptions.ConnectionError:
         print "ConnectionError -- please wait 3 seconds"
@@ -22,6 +24,8 @@ def check_rate_limit_remaining():
     except requests.exceptions.Timeout:
         print "Timeout -- please wait 3 seconds"
         time.sleep(3)
+    except KeyboardInterrupt:
+        sys.exit()
     except:
         print "An Unknown Error during the rate limit check"
 
@@ -38,6 +42,8 @@ def get_single_user_profile_by_id(id):
     except requests.exceptions.Timeout:
         print "Timeout -- please wait 3 seconds"
         time.sleep(3)
+    except KeyboardInterrupt:
+        sys.exit()
     except:
         print "An Unknown Error when getting a single user's profile by id"
         # in case rate limit
@@ -63,6 +69,8 @@ def get_single_user_detailed_list(url, num):
     except requests.exceptions.Timeout:
         print "Timeout -- please wait 3 seconds"
         time.sleep(3)
+    except KeyboardInterrupt:
+        sys.exit()
     except:
         print "An Unknown Error when getting a single user's detailed list"
         # in case rate limit
@@ -82,6 +90,8 @@ def detect_suspicious_user(html_url):
     except requests.exceptions.Timeout:
         print "Timeout -- please wait 3 seconds"
         time.sleep(3)
+    except KeyboardInterrupt:
+        sys.exit()
     except:
         print "An Unknown Error when detecting suspicious user"
         # in case rate limit
@@ -96,6 +106,7 @@ def get_single_user_info(id, follow):
     is_suspicious = detect_suspicious_user(user['html_url'])
     if is_suspicious == True:
         user['is_suspicious'] = True
+        return user
     elif is_suspicious == False:
         user['is_suspicious'] = False
     else:
@@ -117,16 +128,22 @@ def get_single_user_info(id, follow):
 
 def randomly_select_users(needed_users, follow=False, total_github_users=39610000):
     cur = 0
+    existing = []
     with open('data','w') as f:
         while cur < needed_users:
             id = random.randint(1, total_github_users)
+            if id in existing:
+                continue
+            existing.append(id)
             user_info = get_single_user_info(id, follow)
             # in case: id doesn't exist or the information is not integrated
             if not user_info:
                 continue
             # write file
-            f.write(json.dumps(user_info)+'\n')
+            f.write(json.dumps(user_info))
+            f.write('\n')
             cur += 1
+            print cur, " users got"
 
 def load_users(path):
     user = []
@@ -136,4 +153,6 @@ def load_users(path):
     return user
 
 if __name__ == '__main__':
-    randomly_select_users(2)
+    print "Start At: ", datetime.datetime.now()
+    randomly_select_users(1000)
+    print "End At: ", datetime.datetime.now()
