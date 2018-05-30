@@ -1,3 +1,5 @@
 .idea/
 *.db
 .DS_Store
+crawler/config.py
+**/*.pyc

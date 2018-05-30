@@ -1,6 +1,4 @@
-import requests
 import user_crawler
-import json
 
 def check_rate_limit_remaining_test():
     user_crawler.check_rate_limit_remaining()
