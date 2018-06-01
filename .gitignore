@@ -2,4 +2,8 @@
 *.db
 .DS_Store
 crawler/config.py
-**/*.pyc
+crawler/*.pyc
+crawler/__init__.py
+crawler/data
+
+analysis/
