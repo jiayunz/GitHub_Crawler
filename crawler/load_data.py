@@ -11,7 +11,7 @@ def load_users(path):
                 users.append(json.loads(line.strip()))
     except IOError, err:
         print err
-        user = []
+        users = []
     return users
 
 def load_existing(path):
@@ -35,14 +35,10 @@ def get_samples(path, n):
     except IOError, err:
         print err
     for i in range(n):
-        for key in users[i].keys():
-            if re.match(r'.*_?url$', key):
-                users[i].pop(key)
-
         with open('samples', 'a') as f:
             f.write(json.dumps(users[i])+'\n')
 
-def data_processing(path):
+def clean_url(path):
     users = []
     with open(path, 'r') as f:
         for line in f.readlines():
@@ -67,5 +63,5 @@ def data_processing(path):
 
 
 if __name__ == '__main__':
-    data_processing('data')
+    clean_url('data')
 

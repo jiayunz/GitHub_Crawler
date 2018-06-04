@@ -46,7 +46,8 @@ def get_single_user_profile_by_id(id):
         # if d exists, return user profile, else return None
         if user_profile_response.status_code == 200:
             return user_profile_response.json()
-
+        elif user_profile_response.status_code != 404:
+            print url, user_profile_response.status_code
     except requests.exceptions.ConnectionError:
         print "ConnectionError when getting user profile -- please wait 3 seconds"
         time.sleep(3)
@@ -75,7 +76,9 @@ def get_single_user_detailed_list(url):
             # Array, each element is a dict
             response = requests.get(url, headers=headers, params=params)
             if response.status_code != 200:
+                print url, response.status_code
                 return
+
             detail_per_page = response.json()
             if len(detail_per_page) == 0:
                 break
@@ -97,17 +100,25 @@ def get_single_user_commits(name):
     url = 'https://api.github.com/search/commits'
     page = 0
     commits = []
+    commits_len = 0
+
     try:
         while True:
             print "---- get commits of "+name+" ----", "current: "+str(len(commits))+" pieces"
             page += 1
             params = {"q": "author:"+name, "per_page": 100, "page": page}
             check_rate_limit_remaining()
-            commits_per_page = requests.get(url,headers=headers, params=params).json()
+            response = requests.get(url,headers=headers, params=params)
+            if response.status_code != 200:
+                print url, response.status_code
+                return
+            commits_per_page = response.json()
             if len(commits_per_page['items']) == 0:
                 break
             commits += commits_per_page['items']
-            print commits
+            commits_len = commits_per_page['total_count']
+        if len(commits) != commits_len:
+            return
         return commits
 
     except requests.exceptions.ConnectionError:
@@ -120,6 +131,9 @@ def get_single_user_commits(name):
         sys.exit()
     except:
         print "An Unknown Error when getting a single user's commits"
+    # remove accept
+    finally:
+        headers.pop('Accept')
 
 
 def detect_suspicious_user(html_url):
@@ -133,6 +147,8 @@ def detect_suspicious_user(html_url):
             return True
         elif user_html_response.status_code == 200:
             return False
+        else:
+            print html_url, user_html_response.status_code
     except requests.exceptions.ConnectionError:
         print "ConnectionError when detecting suspicious user -- please wait 3 seconds"
         time.sleep(3)
@@ -144,17 +160,21 @@ def detect_suspicious_user(html_url):
     except:
         print "An Unknown Error when detecting suspicious user"
 
-def get_single_user_info(id, follow):
+
+def get_single_user_info(id, follow, commit):
     print "---- get_single_user_info ----"
     user = get_single_user_profile_by_id(id)
     # if id doesn't exist, return None
     if not user:
         return
     # if id is suspicious, flag
-    user['is_suspicious'] = detect_suspicious_user(user['html_url'])
-    if user['is_suspicious'] == True:
+    is_suspicious = detect_suspicious_user(user['html_url'])
+    if is_suspicious == True:
+        user['is_suspicious'] = True
         return user
-    elif user['is_suspicious'] == None:
+    elif is_suspicious == False:
+        user['is_suspicious'] = False
+    elif is_suspicious == None:
         return
 
     repos_list = get_single_user_detailed_list(user['repos_url'])
@@ -169,9 +189,17 @@ def get_single_user_info(id, follow):
             return
         user['followers_list'] = followers_list
         user['following_list'] = following_list
+
+    if commit:
+        commits_list = get_single_user_commits(user['login'])
+        if commits_list == None:
+            return
+        user['commits_count'] = len(commits_list)
+        user['commits_list'] = commits_list
+
     return user
 
-def randomly_select_users(needed_users, follow=False, start_id=1, end_id=39610000):
+def randomly_select_users(needed_users, follow=False, commit=False, start_id=1, end_id=39610000):
     cur = 0
     path = 'data'
     existing = load_data.load_existing(path)
@@ -180,7 +208,8 @@ def randomly_select_users(needed_users, follow=False, start_id=1, end_id=3961000
         id = random.randint(start_id, end_id)
         if id in existing:
             continue
-        user_info = get_single_user_info(id, follow)
+
+        user_info = get_single_user_info(id, follow, commit)
         # in case: id doesn't exist or the information is not integrated
         if not user_info:
             continue
@@ -192,12 +221,17 @@ def randomly_select_users(needed_users, follow=False, start_id=1, end_id=3961000
         f.write(json.dumps(user_info) + '\n')
         f.close()
         # rate limit
-        time.sleep(random.randint(3,4))
+        #time.sleep(random.randint(0,1))
         cur += 1
         print cur, "users got"
     print "total users:", len(existing)
 
 if __name__ == '__main__':
-    print "Start At: ", datetime.datetime.now()
-    randomly_select_users(2, True)
-    print "End At: ", datetime.datetime.now()
+    start_time = datetime.datetime.now()
+    print "Begin At: ", start_time
+    try:
+        randomly_select_users(50, True, False)
+    finally:
+        end_time = datetime.datetime.now()
+        print "Stop At:", end_time
+        print "Duration: ", end_time - start_time

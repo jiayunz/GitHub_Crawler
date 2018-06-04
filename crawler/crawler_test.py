@@ -35,7 +35,7 @@ def detect_suspicious_user_test():
 def get_single_user_info_test():
     id = 1
     user = user_crawler.get_single_user_profile_by_id(id)
-    user_info = user_crawler.get_single_user_info(id, False)
+    user_info = user_crawler.get_single_user_info(id, False, False)
     assert len(user_info['repos_list']) == user['public_repos']
 
 def load_users_test():
@@ -53,6 +53,6 @@ if __name__ == '__main__':
     #check_rate_limit_remaining_test()
     #get_single_user_profile_by_id_test()
     get_single_user_detailed_list_test()
-    #detect_suspicious_user_test()
-    #get_single_user_info_test()
-    #get_single_user_commits_test()
+    detect_suspicious_user_test()
+    get_single_user_info_test()
+    get_single_user_commits_test()
