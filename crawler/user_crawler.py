@@ -5,17 +5,15 @@ import random
 import re
 import sys
 import time
-
 import requests
 
 import config
-from crawler import load_data
 
 # add token
 headers = config.headers
 
 def check_rate_limit_remaining():
-    # 403 Forbidden
+    # incase 403 Forbidden
     url = "https://api.github.com/rate_limit"
     try:
         remaining = requests.get(url=url,headers=headers).json()['rate']['remaining']
@@ -23,7 +21,7 @@ def check_rate_limit_remaining():
             print "exceeds X-RateLimit-Remaining, please wait 5 minutes"
             time.sleep(300)
             remaining = requests.get(url=url, headers=headers).json()['rate']['remaining']
-        print "RateLimit-Remaining:", remaining
+        print "Rate remaining", remaining
 
     except requests.exceptions.ConnectionError:
         print "ConnectionError when checking rate limit -- please wait 3 seconds"
@@ -37,7 +35,6 @@ def check_rate_limit_remaining():
         print "An Unknown Error during the rate limit check"
 
 def get_single_user_profile_by_id(id):
-    print "---- get_single_user_profile_by_id ----"
     url = 'https://api.github.com/user/' + str(id)
     try:
         # in case rate limit
@@ -68,7 +65,6 @@ def get_single_user_detailed_list(url):
     # detailed list should be integrated
     try:
         while True:
-            print "---- get detailed list from "+url+" ----", "current: "+str(len(detailed_list))+" pieces"
             # in case rate limit
             check_rate_limit_remaining()
             page += 1
@@ -104,7 +100,6 @@ def get_single_user_commits(name):
 
     try:
         while True:
-            print "---- get commits of "+name+" ----", "current: "+str(len(commits))+" pieces"
             page += 1
             params = {"q": "author:"+name, "per_page": 100, "page": page}
             check_rate_limit_remaining()
@@ -137,7 +132,6 @@ def get_single_user_commits(name):
 
 
 def detect_suspicious_user(html_url):
-    print "---- detect_suspicious_user ----"
     try:
         # in case rate limit
         check_rate_limit_remaining()
@@ -161,8 +155,7 @@ def detect_suspicious_user(html_url):
         print "An Unknown Error when detecting suspicious user"
 
 
-def get_single_user_info(id, follow, commit):
-    print "---- get_single_user_info ----"
+def get_single_user_info(id, follow, commit, event):
     user = get_single_user_profile_by_id(id)
     # if id doesn't exist, return None
     if not user:
@@ -178,17 +171,26 @@ def get_single_user_info(id, follow, commit):
         return
 
     repos_list = get_single_user_detailed_list(user['repos_url'])
-    if repos_list == None or len(repos_list) != user['public_repos']:
+    if repos_list == None:
+    #or len(repos_list) != user['public_repos']:
         return
     user['repos_list'] = repos_list
 
     if follow:
         followers_list = get_single_user_detailed_list(user['followers_url'])
         following_list = get_single_user_detailed_list(user['following_url'])
-        if followers_list == None or len(followers_list) != user['followers'] or following_list == None or len(following_list) != user['following']:
+        if followers_list == None or following_list == None:
+            #or len(followers_list) != user['followers']
+            #or len(following_list) != user['following']
             return
         user['followers_list'] = followers_list
         user['following_list'] = following_list
+
+    if event:
+        event_list = get_single_user_detailed_list(user['events_url'])
+        if event_list == None:
+            return
+        user['events'] = event_list
 
     if commit:
         commits_list = get_single_user_commits(user['login'])
@@ -199,38 +201,50 @@ def get_single_user_info(id, follow, commit):
 
     return user
 
-def randomly_select_users(needed_users, follow=False, commit=False, start_id=1, end_id=39610000):
-    cur = 0
-    path = 'data'
-    existing = load_data.load_existing(path)
-    while cur < needed_users:
-        print "---- randomly_select_users ----"
-        id = random.randint(start_id, end_id)
-        if id in existing:
-            continue
+def pop_url(info):
+    if isinstance(info, list):
+        for each in info:
+            pop_url(each)
+    if isinstance(info, dict):
+        for key in info.keys():
+            if re.match(r'.*_?url$', key):
+                info.pop(key)
+            elif not isinstance(info[key], str):
+                pop_url(info[key])
 
-        user_info = get_single_user_info(id, follow, commit)
+def randomly_select_users(needed_users, follow=False, commit=False, event=False, start_id=1, end_id=34991752):
+    path = 'data'
+    cur = 0
+    while cur < needed_users:
+        id = random.randint(start_id, end_id)
+
+        user_info = get_single_user_info(id, follow, commit, event)
         # in case: id doesn't exist or the information is not integrated
         if not user_info:
             continue
-        existing.append(id)
         # write file
+        try:
+            for user_key in user_info.keys():
+                if re.match(r'.*_?url$', user_key):
+                    user_info.pop(user_key)
+                # get repos_list/followers_list/following_list/commits_list
+                else:
+                    pop_url(user_info[user_key])
+        except:
+            continue
+
         f = open(path, 'a+')
         f.flush()
-        #f.write(json.dumps(user_info,indent=4)+'\n') # with indent
         f.write(json.dumps(user_info) + '\n')
         f.close()
-        # rate limit
-        #time.sleep(random.randint(0,1))
         cur += 1
         print cur, "users got"
-    print "total users:", len(existing)
 
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
     print "Begin At: ", start_time
     try:
-        randomly_select_users(50, True, False)
+        randomly_select_users(1000000, follow=True, commit=True, event=False)
     finally:
         end_time = datetime.datetime.now()
         print "Stop At:", end_time

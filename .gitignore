@@ -1,7 +1,6 @@
 .idea/
 *.db
 .DS_Store
-crawler/config.py
 crawler/*.pyc
 crawler/__init__.py
 crawler/data

@@ -1,5 +1,5 @@
 import user_crawler
-from crawler import load_data
+import load_data
 
 
 def check_rate_limit_remaining_test():
