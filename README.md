@@ -4,7 +4,7 @@ A crawler used to retrieve the information of GitHub users using GitHub official
 
 ## Installation
 
-We have tested our crawler on CentOS 7.3. Please make sure that you have installed Python2.7 and Requests (`pip install requests`).
+We have tested our crawler on macOS High Sierra 10.13.1. Please make sure that you have installed Python 3.6.7 and Requests (`pip install requests`).
 
 ## Usage
 

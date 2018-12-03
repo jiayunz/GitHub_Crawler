@@ -2,7 +2,6 @@
 import json
 import random
 import re
-import sys
 import time
 import requests
 
@@ -25,45 +24,22 @@ class Crawler():
 
     def check_rate_limit(self):
         # in case 403 Forbidden
-        try:
-            remaining = requests.get(url=self.url_rate_limit,headers=self.headers).json()['rate']['remaining']
-            while remaining == 0:
-                print "exceeds X-RateLimit-Remaining, please wait 5 minutes"
-                time.sleep(300)
-                remaining = requests.get(url=self.url_rate_limit, headers=self.headers).json()['rate']['remaining']
-
-        except requests.exceptions.ConnectionError:
-            print "ConnectionError when checking rate limit -- please wait 3 seconds"
-            time.sleep(3)
-        except requests.exceptions.Timeout:
-            print "Timeout when checking rate limit -- please wait 3 seconds"
-            time.sleep(3)
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            print "An Unknown Error during the rate limit check"
+        remaining = requests.get(url=self.url_rate_limit,headers=self.headers).json()['rate']['remaining']
+        while remaining == 0:
+            print("exceeds X-RateLimit-Remaining, please wait 10 minutes")
+            time.sleep(300)
+            remaining = requests.get(url=self.url_rate_limit, headers=self.headers).json()['rate']['remaining']
 
     def get_user_profile_by_id(self, id):
         url = self.url_user_profile + str(id)
-        try:
-            # in case rate limit
-            self.check_rate_limit()
-            user_profile_response = requests.get(url, headers=self.headers)
-            # if d exists, return user profile, else return None
-            if user_profile_response.status_code == 200:
-                return user_profile_response.json()
-            elif user_profile_response.status_code != 404:
-                print url, user_profile_response.status_code
-        except requests.exceptions.ConnectionError:
-            print "ConnectionError when getting user profile -- please wait 3 seconds"
-            time.sleep(3)
-        except requests.exceptions.Timeout:
-            print "Timeout when getting user profile -- please wait 3 seconds"
-            time.sleep(3)
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            print "An Unknown Error when getting a single user's profile by id"
+        # in case rate limit
+        self.check_rate_limit()
+        user_profile_response = requests.get(url, headers=self.headers)
+        # if d exists, return user profile, else return None
+        if user_profile_response.status_code == 200:
+            return user_profile_response.json()
+        elif user_profile_response.status_code != 404:
+            print(url, user_profile_response.status_code)
 
     # repos, followers, following
     def get_specified_user_list(self, url):
@@ -72,33 +48,22 @@ class Crawler():
         page = 0
         detailed_list = []
         # detailed list should be integrated
-        try:
-            while True:
-                # in case rate limit
-                self.check_rate_limit()
-                page += 1
-                params = {"per_page": 100, "page": page}
-                # Array, each element is a dict
-                response = requests.get(url, headers=self.headers, params=params)
-                if response.status_code != 200:
-                    print url, response.status_code
-                    return
+        while True:
+            # in case rate limit
+            self.check_rate_limit()
+            page += 1
+            params = {"per_page": 100, "page": page}
+            # Array, each element is a dict
+            response = requests.get(url, headers=self.headers, params=params)
+            if response.status_code != 200:
+                print(url, response.status_code)
+                return
 
-                detail_per_page = response.json()
-                if len(detail_per_page) == 0:
-                    break
-                detailed_list += detail_per_page
-            return detailed_list
-        except requests.exceptions.ConnectionError:
-            print "ConnectionError when getting detailed list -- please wait 3 seconds"
-            time.sleep(3)
-        except requests.exceptions.Timeout:
-            print "Timeout when getting detailed list -- please wait 3 seconds"
-            time.sleep(3)
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            print "An Unknown Error when getting a single user's detailed list"
+            detail_per_page = response.json()
+            if len(detail_per_page) == 0:
+                break
+            detailed_list += detail_per_page
+        return detailed_list
 
     def get_user_commits(self, name):
         self.headers['Accept'] = 'application/vnd.github.cloak-preview'
@@ -113,7 +78,7 @@ class Crawler():
                 self.check_rate_limit()
                 response = requests.get(self.url_search_commits,headers=self.headers, params=params)
                 if response.status_code != 200:
-                    print self.url_search_commits, response.status_code
+                    print(self.url_search_commits, response.status_code)
                     return
                 commits_per_page = response.json()
                 if len(commits_per_page['items']) == 0:
@@ -124,44 +89,22 @@ class Crawler():
                 return
             return commits
 
-        except requests.exceptions.ConnectionError:
-            print "ConnectionError when getting commits -- please wait 3 seconds"
-            time.sleep(3)
-        except requests.exceptions.Timeout:
-            print "Timeout when getting commits -- please wait 3 seconds"
-            time.sleep(3)
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            print "An Unknown Error when getting a single user's commits"
-        # remove accept
+        # remove Accept
         finally:
             self.headers.pop('Accept')
 
 
     def detect_suspicious_user(self, html_url):
-        try:
-            # in case rate limit
-            self.check_rate_limit()
-            user_html_response = requests.get(html_url, headers=self.headers)
-            # 404 - True, 200 - False, others - None
-            if user_html_response.status_code == 404:
-                return True
-            elif user_html_response.status_code == 200:
-                return False
-            else:
-                print html_url, user_html_response.status_code
-        except requests.exceptions.ConnectionError:
-            print "ConnectionError when detecting suspicious user -- please wait 3 seconds"
-            time.sleep(3)
-        except requests.exceptions.Timeout:
-            print "Timeout when detecting suspicious user -- please wait 3 seconds"
-            time.sleep(3)
-        except KeyboardInterrupt:
-            sys.exit()
-        except:
-            print "An Unknown Error when detecting suspicious user"
-
+        # in case rate limit
+        self.check_rate_limit()
+        user_html_response = requests.get(html_url, headers=self.headers)
+        # 404 - True, 200 - False, others - None
+        if user_html_response.status_code == 404:
+            return True
+        elif user_html_response.status_code == 200:
+            return False
+        else:
+            print(html_url, user_html_response.status_code)
 
     def get_user_info(self, id):
         user = self.get_user_profile_by_id(id)
@@ -209,7 +152,7 @@ class Crawler():
             for each in info:
                 self.pop_url(each)
         if isinstance(info, dict):
-            for key in info.keys():
+            for key in list(info.keys()):
                 if re.match(r'.*_?url$', key):
                     info.pop(key)
                 elif not isinstance(info[key], str):
@@ -217,34 +160,36 @@ class Crawler():
 
     def write_result(self, user_info, wf):
         # delete urls
-        for user_key in user_info.keys():
+        for user_key in list(user_info.keys()):
             if re.match(r'.*_?url$', user_key):
                 user_info.pop(user_key)
             # get repos_list/followers_list/following_list/commits_list
             else:
                 self.pop_url(user_info[user_key])
-
         # writing results
-        json.dump(user_info, wf)
+        json.dump(user_info, wf, ensure_ascii=False)
         wf.write('\n')
 
     def run(self):
         cur = 0
         with open(self.wpath, 'a') as wf:
             while cur < self.total_user:
-                id = random.randint(self.start_id, self.end_id)
-
-                user_info = self.get_user_info(id)
-                # in case: id doesn't exist or the information is not integrated
-                if not user_info:
-                    continue
-
-                #delete urls
                 try:
-                    self.write_result(user_info, wf)
-                except:
-                    continue
+                    id = random.randint(self.start_id, self.end_id)
 
-                cur += 1
-                print cur, "users got"
+                    user_info = self.get_user_info(id)
+                    # in case: id doesn't exist or the information is not integrated
+                    if not user_info:
+                        continue
+                    #delete urls
+                    self.write_result(user_info, wf)
+
+                    cur += 1
+                    print(str(cur), "users got")
+                except KeyboardInterrupt:
+                    exit()
+                except Exception as ex:
+                    print(ex)
+                    time.sleep(5)
+                    continue
 

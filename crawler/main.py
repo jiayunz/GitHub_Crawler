@@ -5,7 +5,7 @@ from utils.user_crawler import Crawler
 
 def main(argv):
     headers = config.headers
-    total_user = argv[0]
+    total_user = int(argv[0])
     wpath = argv[1]
     # crawl_repo = bool(argv[2])
     # crawl_follow = bool(argv[3])
