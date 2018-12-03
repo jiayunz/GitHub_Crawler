@@ -30,6 +30,8 @@ The crawler will collect the following information:
 * The repository list of the user by [Repository API](https://developer.github.com/v3/repos/#list-user-repositories)
 * The commit logs of the user by [GitHub Search API](https://developer.github.com/v3/search/#search-commits)
 
+Each user entry is stored in JSON format.
+
 ## License
 
 See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
