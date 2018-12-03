@@ -1,10 +1,10 @@
-# Github_Crawler
+# Github Crawler
 
 A crawler used to retrieve the information of Github users using Github official APIs.
 
 ## Installation
 
-we have tested our crawler on CentOS 7.3. Please make sure that you have installed Python2.7 and Requests (`pip install requests`).
+We have tested our crawler on CentOS 7.3. Please make sure that you have installed Python2.7 and Requests (`pip install requests`).
 
 ## Usage
 
