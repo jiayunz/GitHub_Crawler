@@ -16,13 +16,13 @@ The crawler will collect the following information:
 
 we have tested our crawler on CentOS 7.3. Please make sure that you have installed Python2.7 and Requests (`pip install requests`).
 
-## Usage:
+## Usage
 
-* Change directory to [crawler](https://github.com/landiveo/Github_Crawler/tree/master/crawler)
+* Change directory to [crawler](https://github.com/landiveo/Github_Crawler/tree/master/crawler).
 
-* Manually fill in the authorization token in [config.py](https://github.com/landiveo/Github_Crawler/blob/master/crawler/config.py)
+* Manually fill in the authorization token in [config.py](https://github.com/landiveo/Github_Crawler/blob/master/crawler/config.py).
 
-* Run crawler using bash command: `python main.py TOTAL_USER OUTPUT_PATH`
+* Run crawler using bash command: `python main.py TOTAL_USER OUTPUT_PATH`.
 
   `TOTAL_USER` is the total number of users you want to retrieve
   
