@@ -1,6 +1,6 @@
-# Github Crawler
+# GitHub Crawler
 
-A crawler used to retrieve the information of Github users using Github official APIs.
+A crawler used to retrieve the information of GitHub users using GitHub official APIs.
 
 ## Installation
 
@@ -8,9 +8,9 @@ We have tested our crawler on CentOS 7.3. Please make sure that you have install
 
 ## Usage
 
-* Change directory to [crawler](https://github.com/landiveo/Github_Crawler/tree/master/crawler)
+* Change directory to [crawler](https://github.com/landiveo/GitHub_Crawler/tree/master/crawler)
 
-* Manually fill in the [authorization token](https://developer.github.com/v3/#authentication) in [config.py](https://github.com/landiveo/Github_Crawler/blob/master/crawler/config.py)
+* Manually fill in the [authorization token](https://developer.github.com/v3/#authentication) in [config.py](https://github.com/landiveo/GitHub_Crawler/blob/master/crawler/config.py)
 
 * Run crawler using bash command: `python main.py TOTAL_USER OUTPUT_PATH`
 
