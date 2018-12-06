@@ -2,6 +2,8 @@
 
 A crawler used to retrieve the information of GitHub users using GitHub official APIs.
 
+Copyright (c) 2018 by Jiayun Zhang, Fudan University (jiayunzhang15@fudan.edu.cn)
+
 ## Installation
 
 We have tested our crawler on macOS High Sierra 10.13.1. Please make sure that you have installed Python 3.6.7 and Requests (`pip install requests`).
