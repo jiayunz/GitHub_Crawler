@@ -4,12 +4,15 @@ import random
 import re
 import time
 import requests
+from datetime import datetime
+import math
 
 class Crawler():
-    def __init__(self, total_user, wpath, headers, crawl_repo=False, crawl_follow=False, crawl_commit=False, start_id=1, end_id=34991752):
+    def __init__(self, total_user, wpath, headers, date=datetime.strftime(datetime.now(), '%Y-%m-%d'), crawl_repo=False, crawl_follow=False, crawl_commit=False, start_id=1, end_id=34991752):
         self.total_user = total_user
         self.wpath = wpath
         self.headers = headers
+        self.date = date
         self.crawl_repo = crawl_repo
         self.crawl_follow = crawl_follow
         self.crawl_commit = crawl_commit
@@ -65,34 +68,42 @@ class Crawler():
             detailed_list += detail_per_page
         return detailed_list
 
+    # example of last_date: "2018-08-27"
     def get_user_commits(self, name):
+        last_date = self.date
         self.headers['Accept'] = 'application/vnd.github.cloak-preview'
-        page = 0
-        commits = []
-        commits_len = 0
-
         try:
-            while True:
-                page += 1
-                params = {"q": "author:"+name, "per_page": 100, "page": page}
+            self.check_rate_limit()
+            params = {"q": "author:" + name + ' committer-date:<'+last_date, "sort": "committer-date", "per_page": 100, "page": 1}
+            response = requests.get(self.url_search_commits, headers=self.headers, params=params)
+            if response.status_code != 200:
+                print(self.url_search_commits, params, response.status_code)
+                return
+            commits_per_page = response.json()
+            commits_len = commits_per_page['total_count']
+            commits = commits_per_page['items']
+
+            for page in range(2, min(int(math.ceil(commits_len / 100.)) + 1, 11)):
                 self.check_rate_limit()
+                params = {"q": "author:" + name + ' committer-date:<'+last_date, "sort": "committer-date", "per_page": 100, "page": page}
                 response = requests.get(self.url_search_commits,headers=self.headers, params=params)
                 if response.status_code != 200:
-                    print(self.url_search_commits, response.status_code)
+                    print(self.url_search_commits, params, response.status_code)
                     return
                 commits_per_page = response.json()
-                if len(commits_per_page['items']) == 0:
-                    break
                 commits += commits_per_page['items']
-                commits_len = commits_per_page['total_count']
-            if len(commits) != commits_len:
-                return
+
+            for i, commit in enumerate(commits):
+                self.check_rate_limit()
+                details = requests.get(commit['url'], headers=self.headers).json()
+                commits[i]['stats'] = details['stats']
+                commits[i]['files'] = details['files']
+
             return commits
 
         # remove Accept
         finally:
             self.headers.pop('Accept')
-
 
     def detect_suspicious_user(self, html_url):
         # in case rate limit

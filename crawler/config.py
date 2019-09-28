@@ -1,2 +1,2 @@
-#headers = {"Authorization": "token Your KEY HERE"}
-headers = {"Authorization": ""}
+#headers = {"Authorization": "token xxx (REPLACE xxx WITH YOUR KEY)"}
+headers = {"Authorization": "token "}
